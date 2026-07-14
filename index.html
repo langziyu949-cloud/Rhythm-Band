@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<title>节奏乐团 · Rhythm Band</title>
+<style>
+  :root{
+    --pink:#FF6FA5; --pink-d:#E04E86;
+    --yellow:#FFD93D; --yellow-d:#E9B800;
+    --mint:#5FD0A0; --mint-d:#3FB585;
+    --blue:#5AA9FF; --blue-d:#3C86E0;
+    --orange:#FF9F4A; --orange-d:#E47E20;
+    --purple:#B388FF; --purple-d:#9166E0;
+    --cream:#FFF6FB; --ink:#5A3D8A;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;}
+  body{
+    font-family:"PingFang SC","Helvetica Neue",-apple-system,"Segoe UI",sans-serif;
+    background:linear-gradient(160deg,#FFE3F1,#E3F1FF 55%,#E6FFEF);
+    color:var(--ink);
+    display:flex; align-items:center; justify-content:center;
+    overflow:hidden; user-select:none; -webkit-user-select:none;
+    touch-action:none;
+  }
+  #phone{
+    position:relative; width:min(430px,100vw); height:min(920px,100vh);
+    background:var(--cream); border-radius:36px; overflow:hidden;
+    box-shadow:0 20px 60px rgba(120,80,160,.25);
+    display:flex; flex-direction:column;
+  }
+  @media(min-width:480px){ #phone{ border:8px solid #fff; } }
+  .screen{ position:absolute; inset:0; display:none; flex-direction:column; padding:26px 22px; }
+  .screen.on{ display:flex; }
+
+  /* ---------- Title ---------- */
+  #title{ align-items:center; justify-content:center; text-align:center;
+    background:radial-gradient(circle at 50% 30%, #fff 0%, #FFE9F4 60%, #E7F2FF 100%); }
+  .logo{ font-size:13px; letter-spacing:4px; color:var(--pink-d); font-weight:800; }
+  .logo-big{ font-size:44px; font-weight:900; color:var(--ink); margin:4px 0 2px; letter-spacing:1px; }
+  .mascot{ font-size:96px; margin:18px 0 6px; animation:bob 1.6s ease-in-out infinite; }
+  @keyframes bob{ 0%,100%{transform:translateY(0) rotate(-3deg);} 50%{transform:translateY(-12px) rotate(3deg);} }
+  .tagline{ font-size:14px; color:#9A7BB8; margin-bottom:26px; }
+  .btn{ width:78%; max-width:300px; padding:16px; border-radius:20px; font-weight:800; font-size:17px;
+    border:none; cursor:pointer; margin:8px 0; transition:transform .08s; color:#fff; }
+  .btn:active{ transform:scale(.96); }
+  .btn-primary{ background:linear-gradient(180deg,var(--pink),var(--pink-d)); box-shadow:0 6px 0 var(--pink-d); }
+  .btn-ghost{ background:#fff; color:var(--ink); box-shadow:0 5px 0 #E9DCF5; }
+
+  /* ---------- Level select ---------- */
+  #select{ background:linear-gradient(160deg,#E7F4FF,#E9FFF1); }
+  .bar{ display:flex; align-items:center; justify-content:space-between; }
+  .bar h2{ font-size:22px; font-weight:900; margin:0; }
+  .bar .sub{ font-size:12px; color:#7E9BC4; margin-top:2px; }
+  .stage-tag{ background:var(--yellow); color:#7a5a00; font-weight:800; font-size:12px; padding:6px 12px; border-radius:12px; }
+  .practice-toggle{ margin-top:10px; border:0; border-radius:12px; padding:7px 10px; background:#fff; color:#5876A2;
+    font:800 12px inherit; box-shadow:0 3px 0 #D5E4F4; cursor:pointer; }
+  .practice-toggle.on{ background:#E2F7D9; color:#3B8A2E; box-shadow:0 3px 0 #B9E4AA; }
+  .levels{ margin-top:18px; display:flex; flex-direction:column; gap:12px; overflow-y:auto; padding-right:2px; }
+  .lv{ display:flex; align-items:center; gap:14px; background:#fff; border-radius:18px; padding:12px 14px;
+    box-shadow:0 4px 0 #DCE9F7; cursor:pointer; transition:transform .08s; }
+  .lv:active{ transform:scale(.98); }
+  .lv.locked{ opacity:.55; filter:grayscale(.4); cursor:not-allowed; }
+  .lv .face{ width:50px; height:50px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:28px; }
+  .lv .meta{ flex:1; }
+  .lv .meta .n{ font-weight:800; font-size:15px; }
+  .lv .meta .d{ font-size:12px; color:#9A8BB5; margin-top:2px; }
+  .lv .tag{ font-size:11px; font-weight:800; padding:4px 9px; border-radius:10px; }
+  .tag-tap{ background:#FFE3C7; color:#B5701B; }
+  .tag-hold{ background:#D7ECFF; color:#2E6CB0; }
+  .tag-swipe{ background:#E2F7D9; color:#3B8A2E; }
+  .tag-remix{ background:#F0E2FF; color:#6E3FC0; }
+  .lv .star{ font-size:13px; color:#C9B8E0; }
+
+  /* ---------- Game ---------- */
+  #game{ background:linear-gradient(180deg,#FFE9C7,#FFD6EA); padding:0; }
+  .g-top{ display:flex; justify-content:space-between; align-items:center; padding:18px 16px 6px 20px; }
+  .g-name{ font-weight:800; font-size:15px; display:flex; align-items:center; gap:6px; }
+  .g-stat{ text-align:right; }
+  .g-stat .combo{ font-size:22px; font-weight:900; color:var(--orange-d); }
+  .g-stat .score{ font-size:12px; color:#9A7BB8; }
+  .pause-btn{ border:0; background:#fff; color:var(--ink); border-radius:12px; width:38px; height:38px; margin-left:10px;
+    font-size:17px; font-weight:900; box-shadow:0 3px 0 #E9DCF5; cursor:pointer; }
+  .g-prog{ height:8px; background:#fff; border-radius:6px; margin:8px 20px 0; overflow:hidden; }
+  .g-prog > i{ display:block; height:100%; width:0; background:linear-gradient(90deg,var(--pink),var(--orange)); transition:width .1s linear; }
+  .stage-area{ flex:1; position:relative; display:flex; align-items:center; justify-content:center; }
+  #animal{ font-size:120px; transition:transform .06s; will-change:transform; }
+  #ring{ position:absolute; width:160px; height:160px; border-radius:50%; border:7px solid var(--yellow);
+    left:50%; top:50%; transform:translate(-50%,-50%) scale(2.4); opacity:0; pointer-events:none; }
+  #holdRing{ position:absolute; width:172px; height:172px; border-radius:50%;
+    left:50%; top:50%; transform:translate(-50%,-50%); opacity:0; pointer-events:none;
+    background:conic-gradient(var(--mint) 0%, rgba(255,255,255,.35) 0); }
+  #holdLabel{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); font-size:20px; font-weight:900;
+    color:#fff; text-shadow:0 2px 6px rgba(0,0,0,.3); opacity:0; pointer-events:none; }
+  #cueIcon{ position:absolute; top:14%; left:50%; transform:translateX(-50%); font-size:40px; opacity:0; }
+  #hint{ position:absolute; bottom:26%; left:50%; transform:translateX(-50%); font-size:15px; font-weight:800;
+    color:var(--ink); background:#fff; padding:8px 16px; border-radius:14px; box-shadow:0 4px 0 #E9DCF5; opacity:0; }
+  #feedback{ position:absolute; top:30%; left:50%; transform:translate(-50%,-50%) scale(1); font-size:34px; font-weight:900;
+    opacity:0; pointer-events:none; }
+  .g-bottom{ height:120px; background:linear-gradient(180deg,rgba(255,111,165,.0),rgba(255,111,165,.85));
+    display:flex; align-items:center; justify-content:center; color:#fff; font-weight:900; font-size:18px; letter-spacing:2px; }
+  .count{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:80px; font-weight:900; color:var(--pink-d); pointer-events:none; }
+  #tutorial{ position:absolute; top:15%; left:50%; transform:translateX(-50%); width:min(300px,86%); background:rgba(255,255,255,.94);
+    border-radius:18px; padding:12px 16px; text-align:center; box-shadow:0 5px 0 rgba(224,78,134,.18); opacity:0; transition:opacity .2s; pointer-events:none; }
+  #tutorial.on{ opacity:1; }
+  #tutorial strong{ display:block; font-size:15px; color:var(--pink-d); margin-bottom:3px; }
+  #tutorial span{ display:block; font-size:12px; line-height:1.45; color:#6B5B80; }
+  #pauseLayer{ position:absolute; inset:0; display:none; align-items:center; justify-content:center; z-index:5; background:rgba(90,61,138,.42); }
+  #pauseLayer.on{ display:flex; }
+  .pause-card{ width:min(290px,80%); padding:24px 18px 18px; border-radius:24px; background:#FFF9FD; text-align:center; box-shadow:0 10px 0 rgba(70,40,100,.18); }
+  .pause-card h3{ margin:0 0 8px; font-size:26px; }
+  .pause-card p{ margin:0 0 15px; color:#8D76A7; font-size:13px; }
+  .pause-card .btn{ width:100%; margin:6px 0; }
+
+  /* ---------- Stage 1: Stamp Station ---------- */
+  #stampStage{ position:absolute; inset:0; display:none; overflow:hidden; background:#FFF6DC; }
+  #game.stamp-mode #stampStage{ display:block; }
+  #game.stamp-mode .g-top{ height:0; padding:0; }
+  #game.stamp-mode .g-name,#game.stamp-mode .g-stat,#game.stamp-mode .g-prog,
+  #game.stamp-mode #animal,#game.stamp-mode #ring,#game.stamp-mode #holdRing,
+  #game.stamp-mode #holdLabel,#game.stamp-mode #cueIcon,#game.stamp-mode #hint,
+  #game.stamp-mode #feedback,#game.stamp-mode #tutorial,#game.stamp-mode #count,
+  #game.stamp-mode .g-bottom{ display:none!important; }
+  #game.stamp-mode .pause-btn{ position:absolute; z-index:10; top:16px; right:16px; margin:0; }
+  .stamp-sky{ position:absolute; inset:0 0 26%; background:linear-gradient(180deg,#FFD6DF 0%,#FFE8C2 100%); }
+  .stamp-sun{ position:absolute; top:8%; right:-8%; width:42%; aspect-ratio:1; border-radius:50%; background:#FFCA61; opacity:.8; }
+  .stamp-cloud{ position:absolute; width:33%; height:6%; border-radius:50px; background:#FFF6E9; opacity:.8; }
+  .stamp-cloud.one{ top:16%; left:-8%; }
+  .stamp-cloud.two{ top:30%; right:18%; transform:scale(.62); }
+  .stamp-wall-label{ position:absolute; top:9%; left:9%; width:31%; height:17%; border:5px solid #FF7CA8; border-radius:14px; background:#FFF8ED; transform:rotate(-5deg); }
+  .stamp-wall-label:before,.stamp-wall-label:after{ content:""; position:absolute; border-radius:50%; background:#FFCD50; }
+  .stamp-wall-label:before{ width:22%; aspect-ratio:1; left:18%; top:30%; }
+  .stamp-wall-label:after{ width:14%; aspect-ratio:1; left:50%; top:46%; }
+  .stamp-counter{ position:absolute; left:0; right:0; bottom:0; height:31%; background:#65D1A3; border-top:8px solid #378C78; }
+  .stamp-counter:before{ content:""; position:absolute; inset:14% 0 auto; height:10%; background:#FFF0C9; box-shadow:0 14px 0 rgba(43,125,105,.32); }
+  .stamp-conveyor{ position:absolute; left:-5%; right:-5%; bottom:12%; height:16%; border-radius:40px; background:#536B8A; border:8px solid #34465F; transform:rotate(-2deg); }
+  .stamp-conveyor:before{ content:""; position:absolute; inset:13% 4%; border-radius:30px; background:repeating-linear-gradient(90deg,#A6C0D1 0 16px,#7894AA 16px 32px); }
+  .stamp-conveyor:after{ content:""; position:absolute; width:12%; aspect-ratio:1; bottom:-42%; left:23%; border-radius:50%; background:#34465F; box-shadow:170px 0 0 #34465F; }
+  #dogSprite{ position:absolute; z-index:3; left:0; bottom:14%; width:58%; max-height:69%; object-fit:contain; object-position:left bottom; transform-origin:65% 76%; filter:drop-shadow(0 8px 0 rgba(88,75,100,.12)); }
+  #dogSprite.stamp-hit{ animation:dogStamp .18s ease-out; }
+  #dogSprite.stamp-miss{ animation:dogMiss .34s ease-in-out; }
+  @keyframes dogStamp{ 0%{transform:translateY(0) rotate(0deg)} 42%{transform:translate(10px,13px) rotate(5deg)} 100%{transform:translateY(0) rotate(0deg)} }
+  @keyframes dogMiss{ 0%,100%{transform:translateX(0)} 24%{transform:translateX(-11px) rotate(-4deg)} 52%{transform:translateX(10px) rotate(4deg)} 76%{transform:translateX(-6px)} }
+  #missTag{ position:absolute; z-index:6; left:37%; bottom:48%; width:11%; aspect-ratio:1; border:4px solid #E95488; border-radius:50%; background:#FFF5F8; opacity:0; transform:scale(.2) rotate(-30deg); transition:opacity .08s,transform .16s; }
+  #missTag:before,#missTag:after{ content:""; position:absolute; background:#E95488; border-radius:4px; }
+  #missTag:before{ width:60%; height:4px; left:20%; top:43%; transform:rotate(45deg); }
+  #missTag:after{ width:4px; height:60%; top:20%; left:43%; transform:rotate(45deg); }
+  #missTag.on{ opacity:1; transform:scale(1) rotate(12deg); }
+  #parcel{ position:absolute; z-index:5; bottom:20%; left:86%; width:27%; aspect-ratio:1.05; border:6px solid #84533A; border-radius:10px; background:#E7A16B; box-shadow:0 9px 0 rgba(95,72,66,.18); opacity:0; transform:translateX(30%) rotate(7deg); transition:left .12s linear,opacity .15s,transform .15s; }
+  #parcel.active{ opacity:1; transform:translateX(0) rotate(-2deg); }
+  #parcel.big{ width:34%; aspect-ratio:1.24; bottom:18%; background:#D9915F; }
+  #parcel:before{ content:""; position:absolute; left:44%; top:0; bottom:0; width:13%; background:#FFE5A1; border-left:3px solid #C77C46; border-right:3px solid #C77C46; }
+  .parcel-label{ position:absolute; z-index:1; top:17%; left:11%; width:28%; height:22%; border-radius:4px; background:#FFF4DE; border:2px solid #C68E68; }
+  .parcel-stamp{ position:absolute; z-index:2; width:27%; aspect-ratio:1; border:4px solid #FFF8E4; border-radius:50%; background:#F7BF47; box-shadow:0 2px 0 #A8673B; top:34%; right:11%; transform:scale(.78); opacity:.65; transition:transform .1s,background .1s,opacity .1s; }
+  #parcel.big .parcel-stamp.one{ right:56%; }
+  #parcel.big .parcel-stamp.two{ right:13%; }
+  #parcel.small .parcel-stamp.two{ display:none; }
+  #parcel.cue{ animation:parcelCue .16s ease-out; }
+  @keyframes parcelCue{ 0%{filter:brightness(1); transform:translateX(0) rotate(-2deg)} 45%{filter:brightness(1.28); transform:translateX(-5px) rotate(-5deg)} 100%{filter:brightness(1); transform:translateX(0) rotate(-2deg)} }
+  #parcel.parcel-perfect{ animation:parcelPerfect .28s ease-out; }
+  @keyframes parcelPerfect{ 0%{filter:brightness(1); box-shadow:0 9px 0 rgba(95,72,66,.18)} 42%{filter:brightness(1.38) saturate(1.45); box-shadow:0 9px 0 rgba(95,72,66,.18),0 0 0 11px rgba(255,222,86,.72)} 100%{filter:brightness(1); box-shadow:0 9px 0 rgba(95,72,66,.18)} }
+  #parcel.seal-one .parcel-stamp.one,#parcel.seal-two .parcel-stamp.two{ opacity:1; transform:scale(1.12); background:#FF679C; box-shadow:0 3px 0 #AD3F69; }
+  #parcel.parcel-ok{ animation:parcelOk .28s ease-out; }
+  @keyframes parcelOk{ 0%{filter:brightness(1)} 45%{filter:brightness(1.35) saturate(1.5); transform:translateY(-10px) rotate(-2deg)} 100%{filter:brightness(1); transform:translateX(0) rotate(-2deg)} }
+  #parcel.parcel-miss{ animation:parcelMiss .36s ease-in-out; }
+  @keyframes parcelMiss{ 0%,100%{transform:translateX(0) rotate(-2deg)} 30%{transform:translateX(9px) rotate(8deg)} 60%{transform:translateX(-7px) rotate(-7deg)} }
+
+  /* ---------- Result ---------- */
+  #result{ align-items:center; justify-content:center; text-align:center; overflow-y:auto; -webkit-overflow-scrolling:touch;
+    padding:22px 22px 30px; background:radial-gradient(circle at 50% 30%, #fff, #E9FFF1 60%, #E7F2FF 100%); }
+  #result > *{ flex:0 0 auto; }
+  #result .stage-s{ font-size:13px; letter-spacing:2px; color:var(--mint-d); font-weight:800; }
+  #result .grade{ font-size:36px; font-weight:900; margin:4px 0; }
+  .medal{ font-size:72px; margin:4px 0; }
+  .r-score{ font-size:15px; color:#7A5BB0; font-weight:700; }
+  .r-acc{ font-size:13px; color:#9A8BB5; margin-bottom:12px; }
+  .comment{ background:#fff; border-radius:18px; padding:12px 16px; font-size:13px; line-height:1.65; color:#6B5B80;
+    box-shadow:0 4px 0 #DCE9F7; margin-bottom:18px; max-width:300px; }
+  .r-btns{ display:flex; gap:12px; width:80%; max-width:320px; flex:0 0 auto; }
+  .r-btns .btn{ margin:0; }
+  .perfect-list{ display:flex; gap:4px; margin:4px 0 10px; justify-content:center; align-items:center; font-weight:800; color:var(--orange-d); }
+  .perfect-list span{ font-size:20px; }
+</style>
+</head>
+<body>
+<div id="phone">
+
+  <!-- TITLE -->
+  <section id="title" class="screen on">
+    <div class="logo">RHYTHM BAND</div>
+    <div class="logo-big">节奏乐团</div>
+    <div class="mascot">🐻</div>
+    <div class="tagline">跟着节拍，和动物乐手一起演奏！</div>
+    <button class="btn btn-primary" onclick="App.go('select')">▶ 开始游戏</button>
+    <button class="btn btn-ghost" onclick="App.go('select')">关卡选择</button>
+  </section>
+
+  <!-- LEVEL SELECT -->
+  <section id="select" class="screen">
+    <div class="bar">
+      <div>
+        <h2>第一关组</h2>
+        <div class="sub">Stage 1 · 4 关 + 1 Remix</div>
+        <button class="practice-toggle" id="practiceToggle" onclick="App.togglePractice()">练习模式：关</button>
+      </div>
+      <div class="stage-tag">STAGE 1</div>
+    </div>
+    <div class="levels" id="levelList"></div>
+  </section>
+
+  <!-- GAME -->
+  <section id="game" class="screen">
+    <div class="g-top">
+      <div class="g-name"><span id="gAnimal">🐶</span><span id="gTitle">鼓手小狗</span></div>
+      <div class="g-stat">
+        <div class="combo" id="gCombo">0</div>
+        <div class="score" id="gScore">0</div>
+      </div>
+      <button class="pause-btn" id="pauseBtn" onclick="Game.togglePause()" aria-label="暂停游戏">Ⅱ</button>
+    </div>
+    <div class="g-prog"><i id="gProg"></i></div>
+    <div class="stage-area" id="stageArea">
+      <div id="stampStage" aria-hidden="true">
+        <div class="stamp-sky"></div>
+        <div class="stamp-sun"></div>
+        <div class="stamp-cloud one"></div>
+        <div class="stamp-cloud two"></div>
+        <div class="stamp-wall-label"></div>
+        <div class="stamp-counter"></div>
+        <div class="stamp-conveyor"></div>
+        <img id="dogSprite" src="assets/level1/dog-stamp-flat.png" alt="">
+        <div id="missTag"></div>
+        <div id="parcel" class="small">
+          <div class="parcel-label"></div>
+          <div class="parcel-stamp one"></div>
+          <div class="parcel-stamp two"></div>
+        </div>
+      </div>
+      <div id="ring"></div>
+      <div id="holdRing"></div>
+      <div id="holdLabel"></div>
+      <div id="animal">🐶</div>
+      <div id="cueIcon">👆</div>
+      <div id="hint"></div>
+      <div id="feedback"></div>
+      <div class="count" id="count" style="display:none"></div>
+      <div id="tutorial"><strong id="tutorialTitle"></strong><span id="tutorialText"></span></div>
+      <div id="pauseLayer">
+        <div class="pause-card">
+          <h3>暂停一下</h3><p>节拍会在这里等你。</p>
+          <button class="btn btn-primary" onclick="Game.togglePause()">继续演奏</button>
+          <button class="btn btn-ghost" onclick="Game.restart()">重新开始</button>
+          <button class="btn btn-ghost" onclick="Game.quit()">返回选关</button>
+        </div>
+      </div>
+    </div>
+    <div class="g-bottom" id="gBottom">点 按 / 长 按 / 滑 动</div>
+  </section>
+
+  <!-- RESULT -->
+  <section id="result" class="screen">
+    <div class="stage-s" id="rStage">STAGE 1</div>
+    <div class="grade" id="rGrade">高水准！</div>
+    <div class="medal" id="rMedal">🏅</div>
+    <div class="perfect-list" id="rPerfect"></div>
+    <div class="r-score" id="rScore">得分 0</div>
+    <div class="r-acc" id="rAcc">准确率 0%</div>
+    <div class="comment" id="rComment"></div>
+    <div class="r-btns">
+      <button class="btn btn-ghost" style="flex:1" onclick="App.retry()">重试</button>
+      <button class="btn btn-primary" style="flex:1.3" id="rNext" onclick="App.next()">下一关 ▶</button>
+    </div>
+  </section>
+
+</div>
+
+<audio id="stampBgm" preload="auto" src="assets/audio/stamp-station-demo.wav"></audio>
+
+<script>
+/* =========================================================
+   节奏乐团 — 自包含网页节奏游戏
+   第一关使用独立的视觉与音乐素材，其余关卡保留 Web Audio 演示音色
+   ========================================================= */
+
+const LEVELS = [
+  {
+    id:"stamp-station", name:"小狗盖章局", animal:"🐶", bpm:120, totalBeats:60, kind:"tap",
+    face:"#FFE3C7", tag:"点按", tagCls:"tag-tap",
+    comment:["普通包裹一记盖章，","大包裹要稳稳连盖两下。","小狗已经把每一单送到啦！"],
+    build(){
+      const bars=['intro','demo','A','A','B','A','B','B','A','B','A','A','B','B','B'];
+      const actions=[];
+      bars.forEach((type,bar)=>{
+        const base=bar*4;
+        if(type==='A') actions.push({b:base+2,t:'tap',parcel:'small',parcelId:'p'+bar,stamp:1,cues:[0,1]});
+        if(type==='B'){
+          actions.push({b:base+2,t:'tap',parcel:'big',parcelId:'p'+bar,stamp:1,cues:[0,.5,1]});
+          actions.push({b:base+3,t:'tap',parcel:'big',parcelId:'p'+bar,stamp:2});
+        }
+      });
+      return actions;
+    }
+  },
+  {
+    name:"吉他小猫", animal:"🐱", bpm:96, totalBeats:36, kind:"hold",
+    face:"#D7ECFF", tag:"长按", tagCls:"tag-hold",
+    comment:["小猫的滑音绵长得像猫伸懒腰，","长按要稳，别提前松手，","不然就‘喵’一声跑调啦！"],
+    build(){
+      return [4,12,20,28].map(b=>({b,t:'hold',len:2}))
+        .concat([8,9,16,17,24,25,32,33].map(b=>({b,t:'tap'})));
+    }
+  },
+  {
+    name:"键盘小兔", animal:"🐰", bpm:112, totalBeats:40, kind:"swipe",
+    face:"#E2F7D9", tag:"滑动", tagCls:"tag-swipe",
+    comment:["小兔的手指在琴键上蹦迪，","左右上下都要滑到位，","方向错了可不算数哟！"],
+    build(){
+      const dirs=['right','left','up','down'];
+      return range(4,36,4).map((b,i)=>({b,t:'swipe',dir:dirs[i%4]}))
+        .concat(range(6,34,4).map(b=>({b,t:'tap'})));
+    }
+  },
+  {
+    name:"萨克斯小熊", animal:"🐻", bpm:90, totalBeats:42, kind:"hold",
+    face:"#F0E2FF", tag:"长按+连点", tagCls:"tag-hold",
+    comment:["小熊的深呼吸吹得悠长，","长音别憋气，连点别抢拍，","爵士味儿一下就出来了！"],
+    build(){
+      return [4,12,20,28,36].map(b=>({b,t:'hold',len:2}))
+        .concat([8,9,16,17,24,25,32,33,40].map(b=>({b,t:'tap'})));
+    }
+  },
+  {
+    name:"全员合奏 Remix", animal:"🎉", bpm:122, totalBeats:52, kind:"remix",
+    face:"#FFE3F1", tag:"Remix", tagCls:"tag-remix",
+    comment:["四种节奏型穿插来袭，","前面四关的功夫全用上了，","稳住，你就是乐队灵魂！"],
+    build(){
+      const block=[
+        {b:4,t:'tap'},{b:6,t:'tap'},{b:8,t:'tap'},{b:10,t:'tap'},
+        {b:12,t:'hold',len:2},{b:16,t:'tap'},
+        {b:18,t:'swipe',dir:'right'},{b:20,t:'swipe',dir:'left'},{b:22,t:'tap'},
+        {b:24,t:'hold',len:2},{b:28,t:'tap'},{b:30,t:'tap'}
+      ];
+      return block.concat(block.map(x=>({...x,b:x.b+24}))).concat([{b:50,t:'tap'}]);
+    }
+  }
+];
+
+const range=(a,b,s=1)=>{const r=[];for(let i=a;i<=b;i+=s)r.push(i);return r;};
+
+const App = {
+  ctx:null, unlocked:0, lastIndex:0, lastPassed:false, practice:false,
+  go(screen){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+    document.getElementById(screen).classList.add('on');
+    if(screen==='select') this.renderLevels();
+  },
+  renderLevels(){
+    const practiceToggle=document.getElementById('practiceToggle');
+    if(practiceToggle){ practiceToggle.textContent='练习模式：'+(this.practice?'开（慢速·宽松）':'关'); practiceToggle.classList.toggle('on',this.practice); }
+    const list=document.getElementById('levelList');
+    list.innerHTML='';
+    LEVELS.forEach((lv,i)=>{
+      const locked = i>this.unlocked;
+      const el=document.createElement('div');
+      el.className='lv'+(locked?' locked':'');
+      const best = this.best(i);
+      el.innerHTML=`<div class="face" style="background:${lv.face}">${lv.animal}</div>
+        <div class="meta"><div class="n">${lv.name}</div><div class="d">${lv.kind==='remix'?'综合混音关':('节奏型 · '+lv.tag)}</div></div>
+        <div style="text-align:right">
+          <div class="star">${best?('★'+best):(locked?'🔒':'')}</div>
+        </div>`;
+      if(!locked) el.onclick=()=>Game.startLevel(i);
+      list.appendChild(el);
+    });
+  },
+  best(i){ try{ return localStorage.getItem('rb_best_'+i)||''; }catch(e){ return ''; } },
+  saveBest(i,grade){ try{ const order={'再来一次':0,'平凡':1,'高水准':2};
+      const prev=localStorage.getItem('rb_best_'+i);
+      if(!prev||order[grade]>order[prev]) localStorage.setItem('rb_best_'+i,grade); }catch(e){} },
+  retry(){ Game.startLevel(this.lastIndex); },
+  togglePractice(){ this.practice=!this.practice; this.renderLevels(); },
+  next(){
+    if(!this.lastPassed){ this.go('select'); return; }
+    const ni=this.lastIndex+1;
+    if(ni<LEVELS.length){ Game.startLevel(ni); }
+    else this.go('select');
+  }
+};
+
+/* ---------------- Audio engine ---------------- */
+const Audio = {
+  ctx:null, master:null,
+  scale:[261.63,293.66,329.63,392.00,440.00,523.25], // C D E G A C
+  init(){
+    if(this.ctx) return;
+    this.ctx=new (window.AudioContext||window.webkitAudioContext)();
+    this.master=this.ctx.createGain();
+    this.master.gain.value=0.5;
+    this.master.connect(this.ctx.destination);
+  },
+  now(){ return this.ctx?this.ctx.currentTime:0; },
+  kick(t){
+    const o=this.ctx.createOscillator(), g=this.ctx.createGain();
+    o.frequency.setValueAtTime(160,t); o.frequency.exponentialRampToValueAtTime(50,t+0.12);
+    g.gain.setValueAtTime(0.5,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.16);
+    o.connect(g).connect(this.master); o.start(t); o.stop(t+0.18);
+  },
+  bass(t,freq){
+    const o=this.ctx.createOscillator(), g=this.ctx.createGain();
+    o.type='triangle'; o.frequency.value=freq;
+    g.gain.setValueAtTime(0.22,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.28);
+    o.connect(g).connect(this.master); o.start(t); o.stop(t+0.3);
+  },
+  blip(t,freq,dur=0.18,type='square',vol=0.18){
+    const o=this.ctx.createOscillator(), g=this.ctx.createGain();
+    o.type=type; o.frequency.value=freq;
+    g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+    o.connect(g).connect(this.master); o.start(t); o.stop(t+dur+0.02);
+  },
+  hit(quality){
+    const t=this.now();
+    if(quality==='miss'){ this.blip(t,120,0.2,'sawtooth',0.12); return; }
+    const f = quality==='perfect'?880:660;
+    this.blip(t,f,0.16,'square',0.2);
+    this.blip(t+0.04,f*1.5,0.14,'square',0.14);
+  }
+};
+
+/* The first level uses a pre-rendered track so its musical cues and animation
+   share the same 120 BPM timeline. */
+const StampBgm = {
+  el:null, timer:null,
+  get(){ return this.el||(this.el=document.getElementById('stampBgm')); },
+  start(delay=400,rate=1){
+    this.stop();
+    const el=this.get();
+    el.playbackRate=rate;
+    el.currentTime=0;
+    if(delay<=0){ el.play().catch(()=>{}); return; }
+    this.timer=setTimeout(()=>el.play().catch(()=>{}),delay);
+  },
+  pause(){ clearTimeout(this.timer); this.timer=null; this.get().pause(); },
+  resume(){ this.get().play().catch(()=>{}); },
+  stop(){
+    clearTimeout(this.timer); this.timer=null;
+    const el=this.get(); el.pause();
+    try{ el.currentTime=0; }catch(e){}
+  }
+};
+
+/* ---------------- Game engine ---------------- */
+const Game = {
+  raf:null, level:null, idx:0,
+  beatDur:0.5, start:0, end:0,
+  actions:[], beatTimes:[], nextBeat:0,
+  combo:0, score:0, perfect:0, good:0, miss:0,
+  started:false, countDone:false, paused:false,
+  stampMode:false, stampGroups:[], activeStampGroup:null, stampTimers:[], pauseAt:0,
+  press:{down:false, action:null, t0:0, x0:0, y0:0, swipe:false},
+
+  clockNow(){ return this.stampMode ? performance.now()/1000 : Audio.now(); },
+
+  startLevel(i){
+    StampBgm.stop();
+    this.idx=i; App.lastIndex=i;
+    this.level=LEVELS[i];
+    this.stampMode=this.level.id==='stamp-station';
+    Audio.init(); Audio.ctx.resume();
+    this.beatDur=60/(this.level.bpm*(App.practice?0.78:1));
+    const total=this.level.totalBeats;
+    this.start=this.clockNow()+(this.stampMode?0.04:0.4);
+    this.end=this.start+total*this.beatDur;
+    this.beatTimes=[]; for(let b=0;b<total;b++) this.beatTimes.push(this.start+b*this.beatDur);
+    // build actions
+    const raw=this.level.build();
+    this.actions=raw.map(a=>({
+      ...a,
+      time:this.start+a.b*this.beatDur,
+      dur:a.len?a.len*this.beatDur:0,
+      status:'pending', judged:false,
+      pressT:0, releaseT:0, early:false, ringEl:null
+    })).sort((x,y)=>x.time-y.time);
+    this.stampGroups=this.stampMode ? this.makeStampGroups() : [];
+    this.activeStampGroup=null;
+    this.clearStampTimers();
+    this.combo=0; this.score=0; this.perfect=0; this.good=0; this.miss=0;
+    this.started=false; this.countDone=false; this.nextBeat=0; this.paused=false;
+    this.press={down:false,action:null,t0:0,x0:0,y0:0,swipe:false};
+
+    // UI
+    document.getElementById('gAnimal').textContent=this.level.animal;
+    document.getElementById('gTitle').textContent=this.level.name;
+    document.getElementById('animal').textContent=this.level.animal;
+    document.getElementById('gCombo').textContent='0';
+    document.getElementById('gScore').textContent='0';
+    document.getElementById('gProg').style.width='0%';
+    document.getElementById('feedback').style.opacity='0';
+    document.getElementById('hint').style.opacity='0';
+    document.getElementById('cueIcon').style.opacity='0';
+    document.getElementById('ring').style.opacity='0';
+    document.getElementById('holdRing').style.opacity='0';
+    document.getElementById('holdLabel').style.opacity='0';
+    document.getElementById('pauseLayer').classList.remove('on');
+    document.getElementById('pauseBtn').textContent='Ⅱ';
+    document.getElementById('game').classList.toggle('stamp-mode',this.stampMode);
+    this.setTutorial();
+    App.go('game');
+
+    // schedule audio
+    if(this.stampMode){
+      this.resetStampStage();
+      StampBgm.start(0,App.practice?0.78:1);
+    }else{
+      for(let b=0;b<total;b++){
+        const t=this.beatTimes[b];
+        Audio.kick(t);
+        Audio.bass(t, this.level.scale?this.level.scale[b%this.level.scale.length]:Audio.scale[b%Audio.scale.length]);
+        if(b%4===0) Audio.blip(t, Audio.scale[(b/4)%Audio.scale.length]*2, 0.22,'triangle',0.12);
+      }
+    }
+    this.loop();
+  },
+
+  makeStampGroups(){
+    const groups=new Map();
+    this.actions.forEach(a=>{
+      if(!groups.has(a.parcelId)) groups.set(a.parcelId,{ id:a.parcelId, type:a.parcel, actions:[], cues:[], cueIndex:0, shown:false });
+      groups.get(a.parcelId).actions.push(a);
+    });
+    return [...groups.values()].map(g=>{
+      g.actions.sort((a,b)=>a.time-b.time);
+      const first=g.actions[0], last=g.actions[g.actions.length-1];
+      const cueOffsets=first.cues||[];
+      g.cues=cueOffsets.map(offset=>this.start+(first.b-2+offset)*this.beatDur);
+      g.enter=first.time-this.beatDur*2.35;
+      g.exit=last.time+this.beatDur*.62;
+      return g;
+    });
+  },
+  clearStampTimers(){
+    this.stampTimers.forEach(id=>clearTimeout(id));
+    this.stampTimers=[];
+  },
+  stampLater(fn,delay){ this.stampTimers.push(setTimeout(fn,delay)); },
+  resetStampStage(){
+    this.activeStampGroup=null;
+    const parcel=document.getElementById('parcel');
+    parcel.className='small'; parcel.style.left='86%';
+    const dog=document.getElementById('dogSprite');
+    dog.className='';
+    document.getElementById('missTag').classList.remove('on');
+    this.demoState={cueA:false,cueB:false,stamp:false};
+  },
+  showStampGroup(group,now){
+    const parcel=document.getElementById('parcel');
+    if(this.activeStampGroup!==group){
+      this.activeStampGroup=group;
+      parcel.className='active '+(group.type==='big'?'big':'small');
+    }
+    const travel=Math.max(0,Math.min(1,(now-group.enter)/(group.actions[0].time-group.enter)));
+    parcel.style.left=(79-travel*34).toFixed(1)+'%';
+    group.shown=true;
+  },
+  hideStampParcel(){
+    if(this.activeStampGroup){
+      this.activeStampGroup=null;
+      const parcel=document.getElementById('parcel');
+      parcel.className='small'; parcel.style.left='86%';
+    }
+  },
+  pulseParcel(){
+    const parcel=document.getElementById('parcel');
+    parcel.classList.remove('cue');
+    void parcel.offsetWidth;
+    parcel.classList.add('cue');
+  },
+  dogStamp(){
+    const dog=document.getElementById('dogSprite');
+    dog.classList.remove('stamp-hit'); void dog.offsetWidth; dog.classList.add('stamp-hit');
+  },
+  dogMiss(){
+    const dog=document.getElementById('dogSprite');
+    dog.classList.remove('stamp-miss'); void dog.offsetWidth; dog.classList.add('stamp-miss');
+    const tag=document.getElementById('missTag');
+    tag.classList.add('on');
+    this.stampLater(()=>tag.classList.remove('on'),520);
+  },
+  updateStampStage(now){
+    const demoStart=this.start+this.beatDur*4;
+    const demoEnd=this.start+this.beatDur*8;
+    if(now>=demoStart && now<demoEnd){
+      const parcel=document.getElementById('parcel');
+      if(this.activeStampGroup!=='demo'){
+        this.activeStampGroup='demo'; parcel.className='active small'; parcel.style.left='45%';
+      }
+      if(now>=demoStart && !this.demoState.cueA){ this.demoState.cueA=true; this.pulseParcel(); }
+      if(now>=demoStart+this.beatDur && !this.demoState.cueB){ this.demoState.cueB=true; this.pulseParcel(); }
+      if(now>=demoStart+this.beatDur*2 && !this.demoState.stamp){
+        this.demoState.stamp=true; this.dogStamp(); parcel.classList.add('seal-one','parcel-ok');
+      }
+      return;
+    }
+    const group=this.stampGroups.find(g=>now>=g.enter && now<=g.exit);
+    if(!group){ this.hideStampParcel(); return; }
+    this.showStampGroup(group,now);
+    while(group.cueIndex<group.cues.length && now>=group.cues[group.cueIndex]){
+      this.pulseParcel(); group.cueIndex++;
+    }
+  },
+  stampJudge(a,quality){
+    const group=this.stampGroups.find(g=>g.id===a.parcelId);
+    if(!group) return;
+    this.showStampGroup(group,this.clockNow());
+    const parcel=document.getElementById('parcel');
+    if(quality==='miss'){
+      parcel.classList.remove('parcel-miss'); void parcel.offsetWidth; parcel.classList.add('parcel-miss');
+      this.dogMiss();
+      return;
+    }
+    this.dogStamp();
+    if(quality==='perfect'){
+      parcel.classList.remove('parcel-perfect'); void parcel.offsetWidth; parcel.classList.add('parcel-perfect');
+      this.stampLater(()=>parcel.classList.remove('parcel-perfect'),330);
+    }
+    parcel.classList.add(a.stamp===2?'seal-two':'seal-one');
+    if(group.actions.every(action=>action.judged && action.status!=='miss')){
+      parcel.classList.remove('parcel-ok'); void parcel.offsetWidth; parcel.classList.add('parcel-ok');
+    }
+  },
+
+  loop(){
+    const tick=()=>{
+      if(this.paused) return;
+      const now=this.clockNow();
+      if(!this.countDone){
+        const phase=(now-this.start)/this.beatDur;
+        const cEl=document.getElementById('count');
+        if(phase<4){ cEl.style.display='flex'; cEl.textContent=Math.max(1,Math.ceil(4-phase)); }
+        else { cEl.style.display='none'; this.countDone=true; document.getElementById('tutorial').classList.remove('on'); }
+      }
+      if(now>=this.start){
+        this.started=true;
+        if(this.stampMode){
+          this.updateStampStage(now);
+        }else{
+          // bounce animal on each beat
+          const beatPhase=((now-this.start)%this.beatDur)/this.beatDur;
+          const scale=1+0.12*Math.max(0,Math.cos(beatPhase*Math.PI*2));
+          document.getElementById('animal').style.transform=`scale(${scale.toFixed(3)})`;
+          const p=Math.min(1,(now-this.start)/(this.end-this.start));
+          document.getElementById('gProg').style.width=(p*100).toFixed(1)+'%';
+        }
+        // update active action and mark misses
+        this.actions.forEach(a=>{
+          if(a.judged) return;
+          if(!this.stampMode){
+            const approach=this.beatDur*1.1;
+            if(now>=a.time-approach && now<=a.time+0.05){
+              const ring=document.getElementById('ring');
+              const k=(now-(a.time-approach))/approach; // 0..1
+              const sc=2.4-(2.4-1.0)*Math.min(1,k);
+              ring.style.opacity='1';
+              ring.style.transform=`translate(-50%,-50%) scale(${sc.toFixed(3)})`;
+              // cue icon
+              const ci=document.getElementById('cueIcon');
+              ci.style.opacity='1';
+              ci.textContent = a.t==='tap'?'👆':a.t==='hold'?'✋':(a.dir==='right'?'👉':a.dir==='left'?'👈':a.dir==='up'?'👆':'👇');
+            }
+          }
+          if(now>a.time+this.windowFor(a) && !a.judged){
+            if(a.t==='hold' && this.press.down && this.press.action===a){
+              // still holding past window -> ok, wait release
+            } else {
+              const reason=a.t==='hold'?'长按没开始':a.t==='swipe'?'没有滑动':'漏拍了';
+              this.judge(a,'miss',now,reason);
+            }
+          }
+          // hold progress feedback: ring fills over the hold duration, "松手!" near the end
+          if(!this.stampMode && a.t==='hold' && this.press.down && this.press.action===a && !a.judged){
+            const p=Math.min(1,(now-a.pressT)/a.dur);
+            const hr=document.getElementById('holdRing');
+            hr.style.opacity='1';
+            const pct=(p*100).toFixed(1);
+            hr.style.background='conic-gradient(var(--mint) '+pct+'%, rgba(255,255,255,.35) '+pct+'%)';
+            const hl=document.getElementById('holdLabel');
+            hl.style.opacity='1';
+            hl.textContent = p>0.7 ? '松手!' : '按住';
+            document.getElementById('ring').style.opacity='0';
+          }
+        });
+        // clear ring when no active approach
+        if(!this.stampMode){
+          const anyActive=this.actions.some(a=>!a.judged && now>=a.time-this.beatDur*1.1 && now<=a.time+0.05);
+          if(!anyActive){ document.getElementById('ring').style.opacity='0'; document.getElementById('cueIcon').style.opacity='0'; }
+        }
+      }
+      if(now>=this.end+0.4){ this.finish(); return; }
+      this.raf=requestAnimationFrame(tick);
+    };
+    this.raf=requestAnimationFrame(tick);
+  },
+
+  judge(a,quality,now,note=''){
+    if(a.judged) return;
+    a.judged=true; a.status=quality;
+    if(quality==='perfect'){ this.perfect++; this.combo++; this.score+=300+this.combo*5; }
+    else if(quality==='good'){ this.good++; this.combo++; this.score+=100+this.combo*2; }
+    else { this.miss++; this.combo=0; }
+    Audio.hit(quality);
+    if(this.stampMode) this.stampJudge(a,quality);
+    else this.showFeedback(quality,note);
+    document.getElementById('gCombo').textContent=this.combo;
+    document.getElementById('gScore').textContent=this.score;
+    document.getElementById('ring').style.opacity='0';
+    document.getElementById('cueIcon').style.opacity='0';
+    document.getElementById('holdRing').style.opacity='0';
+    document.getElementById('holdLabel').style.opacity='0';
+  },
+
+  showFeedback(q,note=''){
+    if(this.stampMode) return;
+    const el=document.getElementById('feedback');
+    el.textContent = (q==='perfect'?'PERFECT':q==='good'?'GOOD':'MISS')+(note?' · '+note:'');
+    el.style.fontSize=note?'23px':'34px';
+    el.style.color = q==='perfect'?'#3FB585':q==='good'?'#E9B800':'#E0556B';
+    el.style.transition='none'; el.style.opacity='1'; el.style.transform='translate(-50%,-50%) scale(1.3)';
+    requestAnimationFrame(()=>{ el.style.transition='opacity .5s, transform .5s';
+      el.style.opacity='0'; el.style.transform='translate(-50%,-50%) scale(1)'; });
+  },
+
+  /* ---- input ---- */
+  bindInput(){
+    const area=document.getElementById('stageArea');
+    area.addEventListener('pointerdown',e=>this.onDown(e));
+    area.addEventListener('pointermove',e=>this.onMove(e));
+    area.addEventListener('pointerup',e=>this.onUp(e));
+    area.addEventListener('pointercancel',e=>this.onUp(e));
+  },
+  windowFor(a){ return App.practice ? (a.t==='hold'?0.34:0.24) : (a.t==='hold'?0.22:0.16); },
+  perfectWindow(){ return App.practice?0.13:0.08; },
+  holdPerfectWindow(){ return App.practice?0.16:0.10; },
+  setTutorial(){
+    if(this.stampMode){
+      document.getElementById('tutorial').classList.remove('on');
+      return;
+    }
+    const copy=this.level.kind==='tap'
+      ?['圆环贴近角色时点一下','听着鼓点，等黄色圆环收至角色身边再点按。']
+      :this.level.kind==='hold'
+        ?['按住，等提示再松手','圆环出现时按住；绿色进度走完、看到“松手！”再放开。']
+        :this.level.kind==='swipe'
+          ?['跟着箭头滑动','圆环贴近角色时，朝箭头方向一笔滑过去。']
+          :['把前面三种动作接起来','点按、长按和滑动会轮流出现，按图标提示完成。'];
+    document.getElementById('tutorialTitle').textContent=copy[0];
+    document.getElementById('tutorialText').textContent=copy[1]+(App.practice?' 练习模式已放慢节奏。':'');
+    document.getElementById('tutorial').classList.add('on');
+    document.getElementById('gBottom').textContent=App.practice?'练习模式 · 慢速 / 宽松判定':'看圆环落点，跟上节拍';
+  },
+  shiftStampTimeline(delta){
+    if(!this.stampMode || delta<=0) return;
+    this.start+=delta; this.end+=delta;
+    this.beatTimes=this.beatTimes.map(t=>t+delta);
+    this.actions.forEach(a=>a.time+=delta);
+    this.stampGroups.forEach(group=>{
+      group.enter+=delta; group.exit+=delta;
+      group.cues=group.cues.map(t=>t+delta);
+    });
+  },
+  togglePause(){
+    if(!this.started) return;
+    const layer=document.getElementById('pauseLayer');
+    if(this.paused){
+      const pausedFor=this.stampMode?this.clockNow()-this.pauseAt:0;
+      this.shiftStampTimeline(pausedFor);
+      this.paused=false; layer.classList.remove('on'); document.getElementById('pauseBtn').textContent='Ⅱ';
+      Audio.ctx.resume(); if(this.stampMode) StampBgm.resume(); this.loop();
+    }else{
+      this.pauseAt=this.clockNow();
+      this.paused=true; cancelAnimationFrame(this.raf); if(this.stampMode) StampBgm.pause(); Audio.ctx.suspend(); layer.classList.add('on'); document.getElementById('pauseBtn').textContent='▶';
+    }
+  },
+  restart(){
+    cancelAnimationFrame(this.raf); StampBgm.stop(); this.clearStampTimers(); if(this.paused){ Audio.ctx.resume(); }
+    this.startLevel(this.idx);
+  },
+  quit(){
+    cancelAnimationFrame(this.raf); this.paused=false; this.started=false;
+    StampBgm.stop(); this.clearStampTimers();
+    document.getElementById('pauseLayer').classList.remove('on');
+    Audio.ctx.suspend(); App.go('select');
+  },
+  findCandidate(type,now){
+    let best=null,bd=1e9;
+    for(const a of this.actions){
+      if(a.judged) continue;
+      if(type && a.t!==type) continue;
+      const d=Math.abs(now-a.time);
+      if(d<bd && d<=this.windowFor(a)){ bd=d; best=a; }
+    }
+    return best;
+  },
+  onDown(e){
+    if(!this.started) return;
+    const now=this.clockNow();
+    this.press={down:true,action:null,t0:now,x0:e.clientX,y0:e.clientY,swipe:false};
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+    const a=this.findCandidate(null,now);
+    if(!a){
+      this.press.down=false;
+      if(this.stampMode) this.dogMiss(); else this.showFeedback('miss','还没到拍点');
+      return;
+    }
+    if(a.t==='tap'){
+      const q = Math.abs(now-a.time)<=this.perfectWindow()?'perfect':'good';
+      this.judge(a,q,now); this.press.down=false;
+    } else if(a.t==='hold'){
+      this.press.action=a; a.pressT=now;
+      const q = Math.abs(now-a.time)<=this.holdPerfectWindow()?'perfect':'good';
+      a._pressQ=q;
+    } else if(a.t==='swipe'){
+      this.press.action=a; a.pressT=now;
+    }
+  },
+  onMove(e){
+    if(!this.press.down || !this.press.action) return;
+    const a=this.press.action;
+    if(a.t!=='swipe') return;
+    const dx=e.clientX-this.press.x0, dy=e.clientY-this.press.y0;
+    const dist=Math.hypot(dx,dy);
+    if(dist>28){
+      const dir = Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up');
+      if(dir===a.dir){
+        const q=Math.abs(a.pressT-a.time)<=this.holdPerfectWindow()?'perfect':'good';
+        this.judge(a,q,a.pressT); this.press.down=false; this.press.action=null;
+      } else {
+        this.judge(a,'miss',this.clockNow(),'方向不对'); this.press.down=false; this.press.action=null;
+      }
+    }
+  },
+  onUp(e){
+    if(e.currentTarget.hasPointerCapture?.(e.pointerId)) e.currentTarget.releasePointerCapture?.(e.pointerId);
+    if(!this.press.down){ this.press={down:false,action:null,t0:0,x0:0,y0:0,swipe:false}; return; }
+    const now=this.clockNow();
+    const a=this.press.action;
+    if(a && a.t==='hold' && !a.judged){
+      const expectedEnd=a.time+a.dur;
+      a.releaseT=now;
+      const off = now - expectedEnd;
+      const early = off < (App.practice?-0.2:-0.12);
+      const late  = off > (App.practice?0.28:0.18);
+      let q = a._pressQ || 'good';
+      if((early || late) && q==='perfect') q='good';
+      this.judge(a,q,now,early?'松手太早':late?'松手太晚':'');
+    }
+    this.press={down:false,action:null,t0:0,x0:0,y0:0,swipe:false};
+  },
+
+  finish(){
+    cancelAnimationFrame(this.raf);
+    if(this.stampMode){ StampBgm.stop(); this.clearStampTimers(); }
+    // if a hold is still being pressed when the song ends, judge it by how far it filled
+    this.actions.forEach(a=>{
+      if(!a.judged && a.t==='hold' && this.press.down && this.press.action===a){
+        const p=(this.clockNow()-a.pressT)/a.dur;
+        this.judge(a, p>0.6?'good':'miss', this.clockNow());
+      }
+    });
+    const total=this.actions.length;
+    const acc = total? (this.perfect + this.good*0.5)/total : 0;
+    let grade, medal;
+    if(this.miss===0 && acc>=0.92){ grade='高水准'; medal='🏅'; }
+    else if(acc>=0.6){ grade='平凡'; medal='🥈'; }
+    else { grade='再来一次'; medal='🎯'; }
+    App.saveBest(this.idx,grade);
+    App.lastPassed=grade!=='再来一次';
+    if(App.lastPassed){
+      App.unlocked=Math.max(App.unlocked, this.idx+1);
+      try{ localStorage.setItem('rb_unlocked', String(App.unlocked)); }catch(e){}
+    }
+    document.getElementById('rStage').textContent='STAGE 1 · '+this.level.name;
+    document.getElementById('rGrade').textContent=grade+'！';
+    document.getElementById('rGrade').style.color = grade==='高水准'?'#3FB585':grade==='平凡'?'#E9B800':'#E0556B';
+    document.getElementById('rMedal').textContent=medal;
+    const pl=document.getElementById('rPerfect');
+    pl.innerHTML = this.perfect>0 ? ('<span>⭐</span> Perfect ×'+this.perfect) : '<span style="opacity:.5">—</span>';
+    document.getElementById('rScore').textContent='得分 '+this.score;
+    document.getElementById('rAcc').textContent='准确率 '+Math.round(acc*100)+'%';
+    document.getElementById('rComment').innerHTML=this.level.comment.join('<br>');
+    const nextBtn=document.getElementById('rNext');
+    nextBtn.textContent = App.lastPassed ? (this.idx<LEVELS.length-1?'下一关 ▶':'返回选关') : '返回选关';
+    App.go('result');
+  }
+};
+
+Game.bindInput();
+try{ const u=localStorage.getItem('rb_unlocked'); if(u){ const n=parseInt(u,10); if(n>App.unlocked) App.unlocked=n; } }catch(e){}
+</script>
+</body>
+</html>
