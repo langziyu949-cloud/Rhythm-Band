@@ -101,6 +101,8 @@ https://github.com/langziyu949-cloud/Rhythm-Band.git
 
 该脚本会自动暂存变更、创建提交，并推送到 `origin/main`；GitHub Pages 随后自动部署新版本。没有改动时它不会创建空提交。
 
+> 当前这台 Mac 已完成仓库关联与本地提交历史初始化；首次同步内容已通过 Codex 的 GitHub Connector 写入远程。Connector 的授权不会自动提供给本机 Git 命令行，因此要让 `sync.sh` 在终端无感推送，还需要一次性配置 GitHub SSH 密钥或个人访问令牌。配置前，后续由 Codex 使用 GitHub Connector 同步即可。
+
 发布后务必打开线上 URL 实测：进入第一关、确认图片和 BGM 都能正常加载，再把链接转发到微信。
 
 ## 建议的下一轮开发顺序
